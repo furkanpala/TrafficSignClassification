@@ -20,7 +20,7 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.io import read_image
-
+from torchviz import make_dot
 
 # TODO:
 # Loss weights ???
@@ -278,6 +278,7 @@ def main():
     )
 
     train_dataset = TrafficSignDataset("data", "Train", transform)
+
     # train_dataset.get_stats()
     # mean, std = train_dataset.compute_mean_and_std()
     # print(mean, std)
@@ -289,132 +290,142 @@ def main():
         generator=torch.Generator().manual_seed(cfg["SEED"]),
     )
 
+    # print(len(train_dataset), len(val_dataset), len(test_dataset))
+
     train_loader = DataLoader(train_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
 
     model = VGG(num_classes=43)
+    x = torch.randn((1, 3, 32, 32))
+    y = model(x)
+    make_dot(y, params=dict(model.named_parameters())).render(
+        "model_img.png", format="png"
+    )
+
+    raise SystemExit
+
     if torch.cuda.device_count() > 1:
         logger.info(f"Using {torch.cuda.device_count()} GPUs")
         model = nn.DataParallel(model)
     model.to(device)
 
-    loss_fn = nn.CrossEntropyLoss().to(device)
-    optimizer = optim.SGD(
-        model.parameters(),
-        lr=cfg["LR"],
-        momentum=cfg["MOMENTUM"],
-        weight_decay=cfg["WD"],
-    )
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.1, patience=5
-    )
+    # loss_fn = nn.CrossEntropyLoss().to(device)
+    # optimizer = optim.SGD(
+    #     model.parameters(),
+    #     lr=cfg["LR"],
+    #     momentum=cfg["MOMENTUM"],
+    #     weight_decay=cfg["WD"],
+    # )
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+    #     optimizer, mode="min", factor=0.1, patience=5
+    # )
 
-    mean_train_losses = []
-    mean_val_losses = []
-    micro_f1_scores = []
-    macro_f1_scores = []
-    lr_values = []
-    min_val_loss = float("inf")
-    max_micro_f1_score = 0.0
-    max_macro_f1_score = 0.0
-    for epoch in range(1, cfg["EPOCHS"] + 1):
-        mean_train_loss = 0.0
-        mean_val_loss = 0.0
-        gt_ids_all = []
-        pred_ids_all = []
+    # mean_train_losses = []
+    # mean_val_losses = []
+    # micro_f1_scores = []
+    # macro_f1_scores = []
+    # lr_values = []
+    # min_val_loss = float("inf")
+    # max_micro_f1_score = 0.0
+    # max_macro_f1_score = 0.0
+    # for epoch in range(1, cfg["EPOCHS"] + 1):
+    #     mean_train_loss = 0.0
+    #     mean_val_loss = 0.0
+    #     gt_ids_all = []
+    #     pred_ids_all = []
 
-        # Training loop
-        for img, gt_ids in train_loader:
-            img = img.to(device)
-            gt_ids = gt_ids.to(device)
+    #     # Training loop
+    #     for img, gt_ids in train_loader:
+    #         img = img.to(device)
+    #         gt_ids = gt_ids.to(device)
 
-            optimizer.zero_grad()
+    #         optimizer.zero_grad()
 
-            logits = model(img)
+    #         logits = model(img)
 
-            loss = loss_fn(logits, gt_ids)
-            mean_train_loss += loss.item()
+    #         loss = loss_fn(logits, gt_ids)
+    #         mean_train_loss += loss.item()
 
-            loss.backward()
-            optimizer.step()
+    #         loss.backward()
+    #         optimizer.step()
 
-        # Validation loop
-        for img, gt_ids in val_loader:
-            img = img.to(device)
-            gt_ids = gt_ids.to(device)
+    #     # Validation loop
+    #     for img, gt_ids in val_loader:
+    #         img = img.to(device)
+    #         gt_ids = gt_ids.to(device)
 
-            logits = model(img)
-            loss = loss_fn(logits, gt_ids)
-            mean_val_loss += loss.item()
+    #         logits = model(img)
+    #         loss = loss_fn(logits, gt_ids)
+    #         mean_val_loss += loss.item()
 
-            pred_ids = torch.argmax(logits, dim=1)
+    #         pred_ids = torch.argmax(logits, dim=1)
 
-            gt_ids_all.extend(gt_ids.cpu().detach().tolist())
-            pred_ids_all.extend(pred_ids.cpu().detach().tolist())
+    #         gt_ids_all.extend(gt_ids.cpu().detach().tolist())
+    #         pred_ids_all.extend(pred_ids.cpu().detach().tolist())
 
-        scheduler.step(mean_val_loss)
+    #     scheduler.step(mean_val_loss)
 
-        mean_train_loss /= len(train_loader)
-        mean_val_loss /= len(val_loader)
-        micro_f1 = f1_score(gt_ids_all, pred_ids_all, average="micro")
-        macro_f1 = f1_score(gt_ids_all, pred_ids_all, average="macro")
-        current_lr = optimizer.param_groups[0]["lr"]
+    #     mean_train_loss /= len(train_loader)
+    #     mean_val_loss /= len(val_loader)
+    #     micro_f1 = f1_score(gt_ids_all, pred_ids_all, average="micro")
+    #     macro_f1 = f1_score(gt_ids_all, pred_ids_all, average="macro")
+    #     current_lr = optimizer.param_groups[0]["lr"]
 
-        logger.info(
-            "Epoch {}: train loss: {:.4f}, val loss: {:.4f}, micro_f1: {:.4f}, macro_f1: {:.4f}, lr: {}".format(
-                epoch, mean_train_loss, mean_val_loss, micro_f1, macro_f1, current_lr
-            )
-        )
+    #     logger.info(
+    #         "Epoch {}: train loss: {:.4f}, val loss: {:.4f}, micro_f1: {:.4f}, macro_f1: {:.4f}, lr: {}".format(
+    #             epoch, mean_train_loss, mean_val_loss, micro_f1, macro_f1, current_lr
+    #         )
+    #     )
 
-        if mean_val_loss < min_val_loss:
-            min_val_loss = mean_val_loss
-            logger.info("Min val loss found, saving model...")
-            torch.save(
-                model.state_dict(),
-                os.path.join("models", MODEL_NAME, "weights", "min_val_loss.pt"),
-            )
+    #     if mean_val_loss < min_val_loss:
+    #         min_val_loss = mean_val_loss
+    #         logger.info("Min val loss found, saving model...")
+    #         torch.save(
+    #             model.module.state_dict(),
+    #             os.path.join("models", MODEL_NAME, "weights", "min_val_loss.pt"),
+    #         )
 
-        if micro_f1 > max_micro_f1_score:
-            max_micro_f1_score = micro_f1
-            logger.info("Max micro f1 score found, saving model...")
-            torch.save(
-                model.state_dict(),
-                os.path.join("models", MODEL_NAME, "weights", "max_micro_f1.pt"),
-            )
+    #     if micro_f1 > max_micro_f1_score:
+    #         max_micro_f1_score = micro_f1
+    #         logger.info("Max micro f1 score found, saving model...")
+    #         torch.save(
+    #             model.module.state_dict(),
+    #             os.path.join("models", MODEL_NAME, "weights", "max_micro_f1.pt"),
+    #         )
 
-        if macro_f1 > max_macro_f1_score:
-            max_macro_f1_score = macro_f1
-            logger.info("Max macro f1 score found, saving model...")
-            torch.save(
-                model.state_dict(),
-                os.path.join("models", MODEL_NAME, "weights", "max_macro_f1.pt"),
-            )
+    #     if macro_f1 > max_macro_f1_score:
+    #         max_macro_f1_score = macro_f1
+    #         logger.info("Max macro f1 score found, saving model...")
+    #         torch.save(
+    #             model.module.state_dict(),
+    #             os.path.join("models", MODEL_NAME, "weights", "max_macro_f1.pt"),
+    #         )
 
-        if epoch % cfg["SAVE_EVERY_EPOCH"] == 0:
-            logger.info("Saving model...")
-            torch.save(
-                model.state_dict(),
-                os.path.join("models", MODEL_NAME, "weights", f"epoch{epoch}.pt"),
-            )
+    #     if epoch % cfg["SAVE_EVERY_EPOCH"] == 0:
+    #         logger.info("Saving model...")
+    #         torch.save(
+    #             model.module.state_dict(),
+    #             os.path.join("models", MODEL_NAME, "weights", f"epoch{epoch}.pt"),
+    #         )
 
-        mean_train_losses.append(mean_train_loss)
-        mean_val_losses.append(mean_val_loss)
-        micro_f1_scores.append(micro_f1)
-        macro_f1_scores.append(macro_f1)
-        lr_values.append(current_lr)
+    #     mean_train_losses.append(mean_train_loss)
+    #     mean_val_losses.append(mean_val_loss)
+    #     micro_f1_scores.append(micro_f1)
+    #     macro_f1_scores.append(macro_f1)
+    #     lr_values.append(current_lr)
 
-        with open(os.path.join("models", MODEL_NAME, "plots", "data.pkl"), "wb") as f:
-            pickle.dump(
-                {
-                    "train_losses": mean_train_losses,
-                    "val_losses": mean_val_losses,
-                    "micro_f1_scores": micro_f1_scores,
-                    "macro_f1_scores": macro_f1_scores,
-                    "lr": lr_values,
-                },
-                f,
-            )
+    #     with open(os.path.join("models", MODEL_NAME, "plots", "data.pkl"), "wb") as f:
+    #         pickle.dump(
+    #             {
+    #                 "train_losses": mean_train_losses,
+    #                 "val_losses": mean_val_losses,
+    #                 "micro_f1_scores": micro_f1_scores,
+    #                 "macro_f1_scores": macro_f1_scores,
+    #                 "lr": lr_values,
+    #             },
+    #             f,
+    #         )
 
     """
         +----------------------------------------------------------------------------------------+
@@ -456,7 +467,9 @@ def main():
     cr = classification_report(gt_ids_all, pred_ids_all, target_names=classes.values())
     logger.info(cr)
 
-    cm = confusion_matrix(gt_ids_all, pred_ids_all, normalize=None)
+    cm = confusion_matrix(
+        gt_ids_all, pred_ids_all, labels=classes.values(), normalize=None
+    )
     _, ax = plt.subplots(figsize=(20, 20))
     disp = ConfusionMatrixDisplay(cm)
     disp.plot(include_values=False, ax=ax)
