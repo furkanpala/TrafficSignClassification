@@ -9,6 +9,7 @@
 | Train | 39209 |
 | Validation | 6315 |
 | Test | 6315 |
+
 *We halved the testing set using random split to get a validation set (see the seed in config.yaml). Validation set is not considered for the results. This will change in future commits.*
 ![Class distribution of training set](images/dataset_dist.png)
 ![Preprocessing pipeline](images/preprocess.png)
