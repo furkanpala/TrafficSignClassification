@@ -1,9 +1,10 @@
 import os
+from typing import Union
 
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
 from torchvision import transforms as transforms
 from torchvision.io import read_image
 
@@ -60,56 +61,97 @@ class TrafficSignDataset(Dataset):
     def __init__(self, data_root, split, transform, crop=True):
         self.data_root = data_root
         self.split = split
-        self.dataset = pd.read_csv(os.path.join(data_root, split + ".csv"))
+        self.df = pd.read_csv(os.path.join(data_root, split + ".csv"))
         self.transform = transform
         self.crop = crop
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        img_path = self.dataset.iloc[idx]["Path"]
+        img_path = self.df.iloc[idx]["Path"]
         img = read_image(os.path.join(self.data_root, img_path))
         if self.crop:
             # crop the image to the size of the traffic sign
-            xmin = self.dataset.iloc[idx]["Roi.X1"]
-            ymin = self.dataset.iloc[idx]["Roi.Y1"]
-            xmax = self.dataset.iloc[idx]["Roi.X2"]
-            ymax = self.dataset.iloc[idx]["Roi.Y2"]
+            xmin = self.df.iloc[idx]["Roi.X1"]
+            ymin = self.df.iloc[idx]["Roi.Y1"]
+            xmax = self.df.iloc[idx]["Roi.X2"]
+            ymax = self.df.iloc[idx]["Roi.Y2"]
             img = transforms.functional.crop(img, ymin, xmin, ymax - ymin, xmax - xmin)
 
         if self.transform:
             img = self.transform(img)
 
-        class_id = self.dataset.iloc[idx]["ClassId"]
+        class_id = self.df.iloc[idx]["ClassId"]
         class_id = torch.tensor(class_id)
 
         return img, class_id
 
-    def compute_mean_and_std(self):
-        mean = 0.0
-        std = 0.0
-        nb_samples = 0.0
-        for i in range(len(self)):
-            img = self.__getitem__(i)[0]
-            mean += img.mean(axis=(1, 2))
-            std += img.std(axis=(1, 2))
-            nb_samples += 1.0
-        mean /= nb_samples
-        std /= nb_samples
-        return mean, std
 
-    def get_stats(self):
-        # Plot histogram of class distribution
-        class_dist = self.dataset.groupby("ClassId").size()
-        class_dist = class_dist.rename(TrafficSignDataset.classes)
-        class_dist = class_dist.sort_values(ascending=True)
+def compute_mean_and_std(dataset: Union[Dataset, Subset]):
+    mean = 0.0
+    std = 0.0
+    nb_samples = 0.0
+    for img, _ in dataset:
+        mean += img.mean(axis=(1, 2))
+        std += img.std(axis=(1, 2))
+        nb_samples += 1.0
+    mean /= nb_samples
+    std /= nb_samples
+    return mean, std
+
+
+def plot_class_dist(dataset: Union[TrafficSignDataset, Subset], name: str, data_root: str, normalize: bool = False):
+    """
+        Plots the class distribution of the dataset.
+    """
+    if isinstance(dataset, Subset):
+        dataset = dataset.dataset.df.iloc[dataset.indices]
+    elif isinstance(dataset, TrafficSignDataset):
+        dataset = dataset.df
+    class_dist = dataset.groupby("ClassId").size()
+    class_dist = class_dist.rename(TrafficSignDataset.classes)
+    class_dist = class_dist.sort_values(ascending=True)
+    if normalize:
         class_dist = class_dist / class_dist.sum()
-        plt.figure(figsize=(20, 10))
-        plt.bar(class_dist.index, class_dist.values)
-        plt.title(f"Class distribution of {self.split} set")
-        plt.ylabel("Proportion")
-        plt.xticks(rotation=90, fontsize=12)
-        plt.tight_layout()
-        # plt.show()
-        plt.savefig(os.path.join(self.data_root, f"class_dist_{self.split}.png"))
+    plt.figure(figsize=(20, 10))
+    plt.bar(class_dist.index, class_dist.values)
+    plt.title(f"Class distribution of {name} set")
+    plt.ylabel("Proportion")
+    plt.xticks(rotation=90, fontsize=12)
+    plt.tight_layout()
+    plt.plot()
+    plt.savefig(os.path.join(data_root, f"class_dist_{name}.png"))
+
+
+if __name__ == "__main__":
+    from torch.utils.data import random_split
+    import yaml
+
+    with open("config.yaml", "r") as ymlfile:
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+
+    transform = transforms.Compose(
+        [
+            transforms.ToPILImage(),
+            transforms.Resize((32, 32)),
+            transforms.ToTensor(),
+        ]
+    )
+    train_dataset = TrafficSignDataset("data", "Train", transform)
+    test_dataset = TrafficSignDataset("data", "Test", transform)
+    dataset_size = len(train_dataset) + len(test_dataset)
+    val_dataset_size = int(0.05 * dataset_size)
+    train_dataset_size = len(train_dataset) - val_dataset_size
+    train_dataset, val_dataset = random_split(
+        train_dataset,
+        [train_dataset_size, val_dataset_size],
+        generator=torch.Generator().manual_seed(cfg["SEED"]),
+    )
+
+    print("Computing mean and std of the train set...")
+    mean, std = compute_mean_and_std(train_dataset)
+    print(mean, std)
+
+    plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"])
+    plot_class_dist(val_dataset, "val", cfg["DATA_ROOT"])
