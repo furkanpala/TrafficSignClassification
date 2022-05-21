@@ -31,35 +31,39 @@ def main():
     logger = get_logger(__name__, model_name)
     logger.info(cfg)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Running on device: {device}")
 
-    mean, std = cfg["MEAN"], cfg["STD"]
     transform = transforms.Compose(
         [
             transforms.ToPILImage(),
-            transforms.Resize((32, 32)),
+            transforms.Resize((cfg["RESIZE_HEIGHT"], cfg["RESIZE_WIDTH"])),
             transforms.ToTensor(),
-            transforms.Normalize(mean, std),
+            transforms.Normalize(cfg["MEAN"], cfg["STD"]),
         ]
     )
 
-    train_dataset = TrafficSignDataset("data", "Train", transform)
-    test_dataset = TrafficSignDataset("data", "Test", transform)
-    test_dataset, val_dataset = random_split(
-        test_dataset,
-        [len(test_dataset) // 2, len(test_dataset) // 2],
+    train_dataset = TrafficSignDataset(cfg["DATA_ROOT"], "Train", transform)
+    test_dataset = TrafficSignDataset(cfg["DATA_ROOT"], "Test", transform)
+    dataset_size = len(train_dataset) + len(test_dataset)
+    val_dataset_size = int(0.05 * dataset_size)
+    train_dataset_size = len(train_dataset) - val_dataset_size
+    train_dataset, val_dataset = random_split(
+        train_dataset,
+        [train_dataset_size, val_dataset_size],
         generator=torch.Generator().manual_seed(cfg["SEED"]),
     )
 
-    logger.info(f"Train dataset size: {len(train_dataset)}")
-    logger.info(f"Val dataset size: {len(val_dataset)}")
-    logger.info(f"Test dataset size: {len(test_dataset)}")
+    logger.info(
+        f"Train dataset size: {len(train_dataset)}\n"
+        f"Val dataset size: {len(val_dataset)}\n"
+        f"Test dataset size: {len(test_dataset)}"
+    )
 
     train_loader = DataLoader(train_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
 
-    model = VGG16(num_classes=43)
+    model = VGG16(num_classes=cfg["NUM_CLASSES"])
 
     if torch.cuda.device_count() > 1:
         logger.info(f"Using {torch.cuda.device_count()} GPUs")
@@ -74,7 +78,7 @@ def main():
         weight_decay=cfg["WD"],
     )
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.1, patience=5
+        optimizer, mode="max", factor=0.1, patience=5
     )
 
     mean_train_losses = []
@@ -92,7 +96,8 @@ def main():
         pred_ids_all = []
 
         # Training loop
-        for img, gt_ids in train_loader:
+        print(f"Training epoch [{epoch}/{cfg['EPOCHS']}]")
+        for i, (img, gt_ids) in enumerate(train_loader):
             img = img.to(device)
             gt_ids = gt_ids.to(device)
 
@@ -103,11 +108,14 @@ def main():
             loss = loss_fn(logits, gt_ids)
             mean_train_loss += loss.item()
 
+            print(f"\tTraining step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}")
+
             loss.backward()
             optimizer.step()
 
         # Validation loop
-        for img, gt_ids in val_loader:
+        print(f"Validating epoch [{epoch}/{cfg['EPOCHS']}]")
+        for i, (img, gt_ids) in enumerate(val_loader):
             img = img.to(device)
             gt_ids = gt_ids.to(device)
 
@@ -115,12 +123,14 @@ def main():
             loss = loss_fn(logits, gt_ids)
             mean_val_loss += loss.item()
 
+            print(f"\tValidation step [{i + 1}/{len(val_loader)}], Loss: {loss.item():.4f}")
+
             pred_ids = torch.argmax(logits, dim=1)
 
             gt_ids_all.extend(gt_ids.cpu().detach().tolist())
             pred_ids_all.extend(pred_ids.cpu().detach().tolist())
 
-        scheduler.step(mean_val_loss)
+        scheduler.step(max_micro_f1_score)
 
         mean_train_loss /= len(train_loader)
         mean_val_loss /= len(val_loader)
