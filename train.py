@@ -12,7 +12,7 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader, random_split
 
-from database import TrafficSignDataset
+from dataset import TrafficSignDataset
 from model import VGG16
 from utils import create_dir_if_not_exists, get_logger
 
