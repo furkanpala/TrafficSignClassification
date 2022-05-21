@@ -26,18 +26,17 @@ def main():
     logger = get_logger(__name__, model_name)
     logger.info(cfg)
 
-    mean, std = cfg["MEAN"], cfg["STD"]
     transform = transforms.Compose(
         [
             transforms.ToPILImage(),
-            transforms.Resize((32, 32)),
+            transforms.Resize((cfg["RESIZE_HEIGHT"], cfg["RESIZE_WIDTH"])),
             transforms.ToTensor(),
-            transforms.Normalize(mean, std),
+            transforms.Normalize(cfg["MEAN"], cfg["STD"]),
         ]
     )
-    test_dataset = TrafficSignDataset("data", "Test", transform)
+    test_dataset = TrafficSignDataset(cfg["DATA_ROOT"], "Test", transform)
     test_loader = DataLoader(test_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
-    model = VGG16(num_classes=43)
+    model = VGG16(num_classes=cfg["NUM_CLASSES"])
 
     logger.info("Testing started")
     logger.info(f"Testing dataset size: {len(test_dataset)}")
