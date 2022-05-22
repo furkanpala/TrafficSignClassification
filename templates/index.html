@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        p {
+            color: #000;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .center-text {
+            text-align: center;
+        }
+
+        .center-img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .center-table {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        table,
+        th,
+        td {
+            border: #000 1px solid;
+        }
+    </style>
+    <title>Traffic Sign Classification Demo</title>
+</head>
+
+<body>
+    <header>
+        <h1 class="center-text">Traffic Sign Classification Demo</h1>
+        <h3 class="center-text">Furkan Pala &amp; Mustafa Sönmez</h3>
+        <hr />
+    </header>
+    <form action="select_model" method="post" class="center-text">
+        <select name="model_selection_list">
+            {% for model, selected in models %}
+            {% if selected%}
+            <option value="{{ model }}" selected>{{ model }}</option>
+            {% else %}
+            <option value="{{ model }}">{{ model }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit">Select Model</button>
+    </form>
+    <br />
+    <form action="predict" method="post" class="center-text">
+        <input type="file" name="image" accept="image/*" onchange="show_image(this);" />
+    </form>
+    <br />
+    <img id="image" class="center-img">
+    <br />
+    <p class="center-text"></p>
+    <ol class="center-text">
+    </ol>
+    <table class="center-table">
+    </table>
+    <script>
+        function show_image(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                var image = new Image();
+
+                reader.onload = function (e) {
+                    image.src = e.target.result
+
+                    image.onload = function () {
+                        element = document.getElementById('image');
+                        element.setAttribute('src', e.target.result);
+                        height = this.height;
+                        width = this.width;
+                        newWidth = 500;
+                        newHeight = height * (newWidth / width);
+                        element.setAttribute('width', newWidth);
+                        element.setAttribute('height', newHeight);
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+                // send image to server
+                var formData = new FormData();
+                formData.append('image', input.files[0]);
+                fetch('predict', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json()).then(data => {
+                    labels = data['labels'];
+                    probs = data['probs'];
+                    gt_label = data['gt_label'];
+                    var p = document.getElementsByTagName('p')[0];
+                    p.innerHTML = 'Ground-truth: ' + gt_label + '<br />';
+
+                    // empty li elements in ol
+                    var table = document.getElementsByTagName('table')[0];
+                    while (table.firstChild) {
+                        table.removeChild(table.firstChild);
+                    }
+                    for (i = 0; i < labels.length; i++) {
+                        var tr = document.createElement('tr');
+                        if (i == 0) {
+                            tr.style.fontWeight = 'bold';
+                            tr.style.color = labels[i] === gt_label ? "green" : gt_label === "Unknown" ? "black" : "red";
+                        }
+                        var td1 = document.createElement('td');
+                        td1.innerHTML = labels[i];
+                        var td2 = document.createElement('td');
+                        td2.innerHTML = probs[i];
+                        tr.appendChild(td1);
+                        tr.appendChild(td2);
+                        table.appendChild(tr);
+                    }
+                })
+            }
+        }
+    </script>
+</body>
+
+</html>
