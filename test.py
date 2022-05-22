@@ -41,7 +41,7 @@ def main():
     logger.info("Testing started")
     logger.info(f"Testing dataset size: {len(test_dataset)}")
 
-    weights_path = os.path.join("models", model_name, "weights", "min_val_loss.pt")
+    weights_path = os.path.join("models", model_name, "weights", "max_macro_f1.pt")
     logger.info(f"Loading weights from {weights_path}")
     weights = torch.load(weights_path)
     weights = {k.replace("module.", ""): v for k, v in weights.items()}
@@ -108,7 +108,7 @@ def main():
         plt.yticks([])
         img = img.detach().cpu().numpy()
         img = np.transpose(img, (1, 2, 0))
-        img = img * np.array(std) + np.array(mean)
+        img = img * np.array(cfg["STD"]) + np.array(cfg["MEAN"])
         img *= 255
         plt.imshow(img.astype(np.uint8))
 
