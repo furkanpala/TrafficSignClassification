@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 
-class VGG16(nn.Module):
+class VGG19(nn.Module):
     def __init__(self, init_weights=True, num_classes=43):
-        super(VGG16, self).__init__()
+        super(VGG19, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
@@ -109,7 +109,7 @@ class VGG16(nn.Module):
 
 
 if __name__ == "__main__":
-    model = VGG16(num_classes=43)
+    model = VGG19(num_classes=43)
     x = torch.randn(1, 3, 224, 224)
     y = model(x)
     print(y.shape)

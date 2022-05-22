@@ -9,7 +9,7 @@ import yaml
 import os
 import torch
 
-from model import VGG16
+from model import VGG19
 from dataset import TrafficSignDataset
 import pandas as pd
 
@@ -19,7 +19,7 @@ app.config["SELECTED_MODEL"] = None
 with open("config.yaml", "r") as ymlfile:
     cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-model = VGG16(num_classes=cfg["NUM_CLASSES"], init_weights=False)
+model = VGG19(num_classes=cfg["NUM_CLASSES"], init_weights=False)
 model = model.eval()
 
 train_csv_path = os.path.join(cfg["DATA_ROOT"], "Train.csv")
