@@ -11,3 +11,6 @@
 **/*.pyc
 # Ignore PyCharm files
 **/.idea
+test.png
+test.jpg
+test_img0.png
