@@ -6,7 +6,12 @@ import torchvision.transforms as transforms
 import yaml
 from matplotlib import pyplot as plt
 from sklearn.metrics import (
-    f1_score, accuracy_score, top_k_accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay,
+    f1_score,
+    accuracy_score,
+    top_k_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
 )
 from torch.utils.data import DataLoader
 
@@ -78,13 +83,17 @@ def main():
         )
     )
 
-    cr = classification_report(gt_ids_all, pred_ids_all, target_names=TrafficSignDataset.classes.values())
+    cr = classification_report(
+        gt_ids_all, pred_ids_all, target_names=TrafficSignDataset.classes.values()
+    )
     logger.info(cr)
 
     cm = confusion_matrix(gt_ids_all, pred_ids_all, normalize=None)
     _, ax = plt.subplots(figsize=(20, 20))
-    disp = ConfusionMatrixDisplay(cm, display_labels=TrafficSignDataset.classes.values())
-    disp.plot(include_values=True, ax=ax, xticks_rotation='vertical')
+    disp = ConfusionMatrixDisplay(
+        cm, display_labels=TrafficSignDataset.classes.values()
+    )
+    disp.plot(include_values=True, ax=ax, xticks_rotation="vertical")
     plt.savefig(os.path.join("models", model_name, "plots", "cm.png"))
 
     figure = plt.figure(figsize=(8, 8))

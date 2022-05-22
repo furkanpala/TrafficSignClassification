@@ -108,7 +108,9 @@ def main():
             loss = loss_fn(logits, gt_ids)
             mean_train_loss += loss.item()
 
-            print(f"\tTraining step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}")
+            print(
+                f"\tTraining step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}"
+            )
 
             loss.backward()
             optimizer.step()
@@ -123,7 +125,9 @@ def main():
             loss = loss_fn(logits, gt_ids)
             mean_val_loss += loss.item()
 
-            print(f"\tValidation step [{i + 1}/{len(val_loader)}], Loss: {loss.item():.4f}")
+            print(
+                f"\tValidation step [{i + 1}/{len(val_loader)}], Loss: {loss.item():.4f}"
+            )
 
             pred_ids = torch.argmax(logits, dim=1)
 

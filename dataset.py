@@ -101,9 +101,14 @@ def compute_mean_and_std(dataset: Union[Dataset, Subset]):
     return mean, std
 
 
-def plot_class_dist(dataset: Union[TrafficSignDataset, Subset], name: str, data_root: str, normalize: bool = False):
+def plot_class_dist(
+    dataset: Union[TrafficSignDataset, Subset],
+    name: str,
+    data_root: str,
+    normalize: bool = False,
+):
     """
-        Plots the class distribution of the dataset.
+    Plots the class distribution of the dataset.
     """
     if isinstance(dataset, Subset):
         dataset = dataset.dataset.df.iloc[dataset.indices]
