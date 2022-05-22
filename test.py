@@ -75,7 +75,7 @@ def main():
     micro_f1 = f1_score(gt_ids_all, pred_ids_all, average="micro")
     macro_f1 = f1_score(gt_ids_all, pred_ids_all, average="macro")
     acc = accuracy_score(gt_ids_all, pred_ids_all)
-    top_5_acc = top_k_accuracy_score(gt_ids_all, logits_all)
+    top_5_acc = top_k_accuracy_score(gt_ids_all, logits_all, k=5)
 
     logger.info(
         "Testing results\nMicro F1 Score: {:.4f}\nMacro F1 Score: {:.4f}\nAccuracy: {:.4f}\nTop-5 Accuracy: {:.4f}".format(
