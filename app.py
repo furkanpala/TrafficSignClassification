@@ -98,7 +98,6 @@ def predict():
         row = train_df.loc[train_df["Path"].str.contains(filename)]
         if len(row) > 0:
             class_id = row["ClassId"].item()
-        class_id = row["ClassId"].item()
 
     return jsonify(
         {
