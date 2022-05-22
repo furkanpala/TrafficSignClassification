@@ -154,9 +154,10 @@ if __name__ == "__main__":
         generator=torch.Generator().manual_seed(cfg["SEED"]),
     )
 
-    print("Computing mean and std of the train set...")
-    mean, std = compute_mean_and_std(train_dataset)
-    print(mean, std)
+    # print("Computing mean and std of the train set...")
+    # mean, std = compute_mean_and_std(train_dataset)
+    # print(mean, std)
 
     plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"])
     plot_class_dist(val_dataset, "val", cfg["DATA_ROOT"])
+    plot_class_dist(test_dataset, "test", cfg["DATA_ROOT"])
