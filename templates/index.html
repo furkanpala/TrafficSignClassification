@@ -46,7 +46,7 @@
     <form action="select_model" method="post" class="center-text">
         <select name="model_selection_list">
             {% for model, selected in models %}
-            {% if selected%}
+            {% if selected %}
             <option value="{{ model }}" selected>{{ model }}</option>
             {% else %}
             <option value="{{ model }}">{{ model }}</option>
