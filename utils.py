@@ -2,12 +2,12 @@ import logging
 import os
 
 
-def create_dir_if_not_exists(dir_path):
+def create_dir_if_not_exists(dir_path: str) -> None:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
 
-def get_logger(module_name, model_name):
+def get_logger(module_name: str, model_name: str) -> logging.Logger:
     path = os.path.join("models", model_name, "logs", "log.log")
     logger = logging.getLogger(module_name)
     logger.setLevel(logging.INFO)

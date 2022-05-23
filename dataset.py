@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, Tuple
 
 import pandas as pd
 import torch
@@ -58,17 +58,17 @@ class TrafficSignDataset(Dataset):
         42: "End no passing veh > 3.5 tons",
     }
 
-    def __init__(self, data_root, split, transform, crop=True):
+    def __init__(self, data_root: str, split: str, transform: transforms.Compose, crop: bool = True):
         self.data_root = data_root
         self.split = split
         self.df = pd.read_csv(os.path.join(data_root, split + ".csv"))
         self.transform = transform
         self.crop = crop
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.df)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
         img_path = self.df.iloc[idx]["Path"]
         img = read_image(os.path.join(self.data_root, img_path))
         if self.crop:
@@ -102,11 +102,11 @@ def compute_mean_and_std(dataset: Union[Dataset, Subset]):
 
 
 def plot_class_dist(
-    dataset: Union[TrafficSignDataset, Subset],
-    name: str,
-    data_root: str,
-    normalize: bool = False,
-):
+        dataset: Union[TrafficSignDataset, Subset],
+        name: str,
+        data_root: str,
+        normalize: bool = False,
+) -> None:
     """
     Plots the class distribution of the dataset.
     """
