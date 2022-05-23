@@ -13,7 +13,7 @@ from sklearn.metrics import (
 from torch.utils.data import DataLoader, random_split
 
 from dataset import TrafficSignDataset
-from model import VGG19
+from model import VGG11
 from utils import create_dir_if_not_exists, get_logger
 
 
@@ -63,7 +63,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
 
-    model = VGG19(num_classes=cfg["NUM_CLASSES"])
+    model = VGG11(num_classes=cfg["NUM_CLASSES"])
 
     if torch.cuda.device_count() > 1:
         logger.info(f"Using {torch.cuda.device_count()} GPUs")
