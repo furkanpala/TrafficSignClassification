@@ -1,6 +1,7 @@
 import os
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 
+import numpy as np
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
@@ -106,6 +107,7 @@ def plot_class_dist(
         name: str,
         data_root: str,
         normalize: bool = False,
+        weights: Optional[np.ndarray] = None,
 ) -> None:
     """
     Plots the class distribution of the dataset.
@@ -124,10 +126,38 @@ def plot_class_dist(
     plt.title(f"Class distribution of {name} set")
     plt.ylabel("Proportion")
     plt.xticks(rotation=90, fontsize=12)
+    if weights:
+        ax = plt.twinx()
+        ax.plot(weights, color="red")
+        ax.set_ylabel("Weight")
     plt.tight_layout()
     plt.plot()
-    plt.savefig(os.path.join(data_root, f"class_dist_{name}.png"))
+    if weights:
+        plt.savefig(os.path.join(data_root, f"class_dist_{name}_with_weights.png"))
+    else:
+        plt.savefig(os.path.join(data_root, f"class_dist_{name}.png"))
 
+
+def enet_weighting(
+        dataset: Union[TrafficSignDataset, Subset],
+        c: float = 1.02,
+        sort_first: bool = False,
+) -> np.array:
+    """
+    Plots the class distribution of the dataset.
+    """
+    if isinstance(dataset, Subset):
+        dataset = dataset.dataset.df.iloc[dataset.indices]
+    elif isinstance(dataset, TrafficSignDataset):
+        dataset = dataset.df
+    class_dist = dataset.groupby("ClassId").size()
+    if sort_first:
+        class_dist = class_dist.sort_values(ascending=True)
+    class_dist = class_dist / class_dist.sum()
+    class_dist = 1 / np.log(c + class_dist)
+    class_dist = class_dist.to_numpy()
+
+    return class_dist
 
 if __name__ == "__main__":
     from torch.utils.data import random_split
@@ -159,5 +189,8 @@ if __name__ == "__main__":
     # print(mean, std)
 
     plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"])
-    plot_class_dist(val_dataset, "val", cfg["DATA_ROOT"])
-    plot_class_dist(test_dataset, "test", cfg["DATA_ROOT"])
+    # plot_class_dist(val_dataset, "val", cfg["DATA_ROOT"])
+    # plot_class_dist(test_dataset, "test", cfg["DATA_ROOT"])
+    #
+    # weights = enet_weighting(train_dataset)
+    # plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"], weights=weights)

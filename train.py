@@ -12,8 +12,8 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader, random_split
 
-from dataset import TrafficSignDataset
-from model import VGG11
+from dataset import TrafficSignDataset, enet_weighting
+from model import VGG11, VGG16
 from utils import create_dir_if_not_exists, get_logger
 
 
@@ -63,14 +63,19 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
 
-    model = VGG11(num_classes=cfg["NUM_CLASSES"])
+    model = VGG16(num_classes=cfg["NUM_CLASSES"], config="D")
 
     if torch.cuda.device_count() > 1:
         logger.info(f"Using {torch.cuda.device_count()} GPUs")
         model = nn.DataParallel(model)
     model.to(device)
 
-    loss_fn = nn.CrossEntropyLoss().to(device)
+    class_weights = None
+    if cfg["ENET_CLASS_WEIGHTING"]:
+        class_weights = torch.from_numpy(enet_weighting(train_dataset)).float()
+        logger.info(f"Class weights: {class_weights}")
+
+    loss_fn = nn.CrossEntropyLoss(weight=class_weights).to(device)
     optimizer = optim.SGD(
         model.parameters(),
         lr=cfg["LR"],

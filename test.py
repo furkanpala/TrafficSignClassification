@@ -16,7 +16,7 @@ from sklearn.metrics import (
 from torch.utils.data import DataLoader
 
 from dataset import TrafficSignDataset
-from model import VGG11
+from model import VGG16
 from utils import get_logger, create_dir_if_not_exists
 
 
@@ -41,7 +41,7 @@ def main():
     )
     test_dataset = TrafficSignDataset(cfg["DATA_ROOT"], "Test", transform)
     test_loader = DataLoader(test_dataset, batch_size=cfg["BATCH_SIZE"], shuffle=True)
-    model = VGG11(num_classes=cfg["NUM_CLASSES"])
+    model = VGG16(num_classes=cfg["NUM_CLASSES"], config="D")
 
     logger.info("Testing started")
     logger.info(f"Testing dataset size: {len(test_dataset)}")
