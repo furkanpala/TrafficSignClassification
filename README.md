@@ -2,9 +2,7 @@
 
 ## Model
 
-*K. Simonyan and A. Zisserman, “Very deep convolutional networks for large-scale image recognition,” arXiv 1409.1556, 09
-
-2014. https://arxiv.org/abs/1409.1556*
+*K. Simonyan and A. Zisserman, “Very deep convolutional networks for large-scale image recognition,” arXiv 1409.1556, 09 2014. https://arxiv.org/abs/1409.1556*
 
 ## Dataset
 
