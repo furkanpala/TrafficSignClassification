@@ -1,7 +1,13 @@
 # Traffic Sign Classifcation Using VGG
+
 ## Model
-*K. Simonyan and A. Zisserman, “Very deep convolutional networks for large-scale image recognition,” arXiv 1409.1556, 09 2014. https://arxiv.org/abs/1409.1556*
+
+*K. Simonyan and A. Zisserman, “Very deep convolutional networks for large-scale image recognition,” arXiv 1409.1556, 09
+
+2014. https://arxiv.org/abs/1409.1556*
+
 ## Dataset
+
 [GTSRB - German Traffic Sign Recognition Benchmark](https://www.kaggle.com/datasets/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign)
 
 | Split | Samples |
@@ -14,11 +20,15 @@
 ![Class distribution of training set](images/dataset_dist.png)
 ![Preprocessing pipeline](images/preprocess.png)
 
-
 ## Results
-| Model | Micro F1 | Macro F1 | Top-5 Accuracy
-| ----------- | ----------- | ----------- | ----------- |
-| VGG-19 | 97.45% | 95.09% | 98.64% |
+
+| Model   | Micro F1 (%) | Macro F1 (%) | Top-5 Accuracy (%) |
+|---------|--------------|--------------|--------------------|
+| VGG19   | 97.45        | 95.09        | 98.64              |
+| VGG16-D | 97.92        | **95.92**    | **99.76**          |
+| VGG16-C | 97.34        | 94.91        | 99.36              |
+| VGG13   | **97.99**    | 95.90        | 99.66              |
+| VGG11   | 97.42        | 95.68        | 99.56              |
 
 ![Loss graph](images/losses.png)
 ![F1 scores graph](images/f1_scores.png)
