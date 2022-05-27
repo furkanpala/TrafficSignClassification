@@ -9,17 +9,17 @@ import yaml
 import os
 import torch
 
-from model import VGG19
+from model import VGG16
 from dataset import TrafficSignDataset
 import pandas as pd
 
 app = Flask(__name__)
-app.config["SELECTED_MODEL"] = None
+selected_model = None
 
 with open("config.yaml", "r") as ymlfile:
     cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
-model = VGG19(num_classes=cfg["NUM_CLASSES"], init_weights=False)
+model = VGG16(num_classes=cfg["NUM_CLASSES"], init_weights=False, config="D")
 model = model.eval()
 
 train_csv_path = os.path.join(cfg["DATA_ROOT"], "Train.csv")
@@ -36,31 +36,30 @@ if os.path.exists(test_csv_path):
 
 
 def list_models(selected_model):
-    return [
-        (
-            path.replace("models/", ""),
-            selected_model == path.replace("models/", "") if selected_model else i == 0,
-        )
-        for i, path in enumerate(
-            glob.glob("models/**/*.pt", recursive=True)
-            + glob.glob("models/**/*.pth", recursive=True)
-        )
+    models = [
+        (path, selected_model == path)
+        for path in glob.glob("models/**/*.pt", recursive=True)
+        + glob.glob("models/**/*.pth", recursive=True)
     ]
+    models = [(None, selected_model is None)] + models
+    return models
 
 
 @app.route("/")
 def index():
-    models = list_models(app.config["SELECTED_MODEL"])
+    global selected_model
+    models = list_models(selected_model)
     return render_template("index.html", models=models)
 
 
 @app.route("/select_model", methods=["POST"])
 def select_model():
+    global selected_model
     selected_model = request.form.get("model_selection_list", None)
-    app.config["SELECTED_MODEL"] = selected_model
-    weights = torch.load(os.path.join("models", selected_model), map_location="cpu")
-    weights = {k.replace("module.", ""): v for k, v in weights.items()}
-    model.load_state_dict(weights)
+    if os.path.exists(selected_model):
+        weights = torch.load(selected_model, map_location="cpu")
+        weights = {k.replace("module.", ""): v for k, v in weights.items()}
+        model.load_state_dict(weights)
 
     return redirect("/")
 
@@ -109,4 +108,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run()
