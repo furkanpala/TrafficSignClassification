@@ -39,7 +39,6 @@ which tests the model using the weights from `models/<MODEL_NAME>/weights/<WEIGH
 *Validation set is randomly sampled with the seed specified in the config.yaml file from the training set.*
 
 ### Class Distribution
-![Class distribution of training set](images/dataset_dist.png)
 Classes are not evenly distributed as you can see the figure above. Thus, we also conducted experiments using ENet<sup>2</sup> class weighting in cross entropy loss function. In the figure below, you can see the weight plot as well.
 ![Class distribution of training set with weights](images/dataset_dist_with_class_weights.png)
 
