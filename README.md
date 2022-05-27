@@ -15,7 +15,7 @@ gunicorn wsgi:app
 ```
 Open your browser and go to the specified URL in terminal
 
-## Trainining & Testing
+## Training & Testing
 First, download the dataset from the URL in the Dataset section. Then, create a folder and put the dataset files/folders there. Then, go the `config.yaml` file and change the `DATA_ROOT` with the name of the folder you just created.
 For training, run the following command
 ```
