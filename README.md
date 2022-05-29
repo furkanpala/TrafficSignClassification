@@ -11,7 +11,7 @@ pip install -r requirements.txt
 ```
 Then, run the following command
 ```
-gunicorn wsgi:app
+python3 wsgi.py
 ```
 Open your browser and go to the specified URL in terminal
 
