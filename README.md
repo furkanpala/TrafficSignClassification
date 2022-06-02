@@ -9,13 +9,14 @@ To run the web app, first install dependencies
 ```
 pip install -r requirements.txt
 ```
+Then, make sure that the trained model weights are in `/models/` folder. If you wish to upload images from testing set and see the ground-truth labels, then put the `Test.csv` file in the directory specified in `DATA_ROOT` variable in `config.yaml`
 Then, run the following command
 ```
-gunicorn wsgi:app
+python3 wsgi.py
 ```
 Open your browser and go to the specified URL in terminal
 
-## Trainining & Testing
+## Training & Testing
 First, download the dataset from the URL in the Dataset section. Then, create a folder and put the dataset files/folders there. Then, go the `config.yaml` file and change the `DATA_ROOT` with the name of the folder you just created.
 For training, run the following command
 ```
