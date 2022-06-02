@@ -59,7 +59,13 @@ class TrafficSignDataset(Dataset):
         42: "End no passing veh > 3.5 tons",
     }
 
-    def __init__(self, data_root: str, split: str, transform: transforms.Compose, crop: bool = True):
+    def __init__(
+        self,
+        data_root: str,
+        split: str,
+        transform: transforms.Compose,
+        crop: bool = True,
+    ):
         self.data_root = data_root
         self.split = split
         self.df = pd.read_csv(os.path.join(data_root, split + ".csv"))
@@ -103,11 +109,11 @@ def compute_mean_and_std(dataset: Union[Dataset, Subset]):
 
 
 def plot_class_dist(
-        dataset: Union[TrafficSignDataset, Subset],
-        name: str,
-        data_root: str,
-        normalize: bool = False,
-        weights: Optional[np.ndarray] = None,
+    dataset: Union[TrafficSignDataset, Subset],
+    name: str,
+    data_root: str,
+    normalize: bool = False,
+    weights: Optional[np.ndarray] = None,
 ) -> None:
     """
     Plots the class distribution of the dataset.
@@ -139,9 +145,9 @@ def plot_class_dist(
 
 
 def enet_weighting(
-        dataset: Union[TrafficSignDataset, Subset],
-        c: float = 1.02,
-        sort_first: bool = False,
+    dataset: Union[TrafficSignDataset, Subset],
+    c: float = 1.02,
+    sort_first: bool = False,
 ) -> np.array:
     """
     Plots the class distribution of the dataset.
@@ -158,6 +164,7 @@ def enet_weighting(
     class_dist = class_dist.to_numpy()
 
     return class_dist
+
 
 if __name__ == "__main__":
     from torch.utils.data import random_split
@@ -188,9 +195,27 @@ if __name__ == "__main__":
     # mean, std = compute_mean_and_std(train_dataset)
     # print(mean, std)
 
-    plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"])
+    # plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"])
     # plot_class_dist(val_dataset, "val", cfg["DATA_ROOT"])
     # plot_class_dist(test_dataset, "test", cfg["DATA_ROOT"])
     #
     # weights = enet_weighting(train_dataset)
     # plot_class_dist(train_dataset, "train", cfg["DATA_ROOT"], weights=weights)
+
+    figure = plt.figure(figsize=(8, 8))
+    cols, rows = 3, 3
+    for i in range(1, cols * rows + 1):
+        sample_idx = torch.randint(len(train_dataset), size=(1,)).item()
+        img, label = train_dataset[sample_idx]
+        figure.add_subplot(rows, cols, i)
+        plt.tight_layout()
+        plt.xlabel(f"Label: {TrafficSignDataset.classes[label.item()]}", fontsize=13)
+        plt.xticks([])
+        plt.yticks([])
+        img = img.detach().cpu().numpy()
+        img = np.transpose(img, (1, 2, 0))
+        # img = img * np.array(cfg["STD"]) + np.array(cfg["MEAN"])
+        img *= 255
+        plt.imshow(img.astype(np.uint8))
+
+    plt.savefig(os.path.join(cfg["DATA_ROOT"], "train_samples.png"))
