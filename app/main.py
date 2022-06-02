@@ -69,7 +69,7 @@ def predict():
     img = request.files["image"]
     filename = img.filename
     np_img = np.frombuffer(img.read(), np.uint8)
-    img = Image.open(io.BytesIO(np_img))
+    img = Image.open(io.BytesIO(np_img)).convert("RGB")
 
     transform = transforms.Compose(
         [
