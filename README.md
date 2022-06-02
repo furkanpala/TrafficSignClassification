@@ -9,6 +9,7 @@ To run the web app, first install dependencies
 ```
 pip install -r requirements.txt
 ```
+Then, make sure that the trained model weights are in `/models/` folder. If you wish to upload images from testing set and see the ground-truth labels, then put the `Test.csv` file in the directory specified in `DATA_ROOT` variable in `config.yaml`
 Then, run the following command
 ```
 python3 wsgi.py
