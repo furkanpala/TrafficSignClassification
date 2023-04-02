@@ -1,4 +1,5 @@
 # Traffic Sign Classifcation Using VGG
+Co-work with Mustafa Sönmez at ITU
 
 ## Model
 We have used the VGG model architecture with different configurations<sup>1</sup>.
